@@ -14,12 +14,14 @@ import {
   LogOut,
   FileText,
 } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 
 const employeeNavLinks = [
-  { href: '/employees/repository', label: 'Employee Repository', icon: Users },
+  { href: '/employees/repository', label: 'Repository', icon: Users },
   { href: '/employees/org-chart', label: 'Org Chart', icon: Network },
   { href: '/employees/onboarding', label: 'Onboarding', icon: UserPlus },
-  { href: '/employees/promotions', label: 'Promotions & Transfers', icon: ArrowRightLeft },
+  { href: '/employees/promotions', label: 'Promotions', icon: ArrowRightLeft },
   { href: '/employees/reminders', label: 'Reminders', icon: Bell },
   { href: '/employees/grievances', label: 'Grievances', icon: ShieldAlert },
   { href: '/employees/settlements', label: 'Settlements', icon: LogOut },
@@ -32,30 +34,23 @@ export default function EmployeeLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const activeTab = employeeNavLinks.find((link) => pathname.startsWith(link.href))?.href || employeeNavLinks[0].href;
 
   return (
-    <div className="grid flex-1 items-start gap-4 md:gap-8 lg:grid-cols-[240px_1fr]">
-      <nav className="hidden lg:flex flex-col gap-1 text-sm text-muted-foreground">
-        {employeeNavLinks.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary',
-              {
-                'bg-muted font-semibold text-primary': pathname === link.href,
-              }
-            )}
-          >
-            <link.icon className="h-4 w-4" />
-            {link.label}
-          </Link>
-        ))}
-      </nav>
-      <div className="lg:hidden">
-        {/* Mobile menu could go here if needed */}
-      </div>
-      <div className="grid auto-rows-max items-start gap-4 lg:gap-8 lg:col-span-1">
+     <div className="flex flex-col gap-4">
+      <Tabs value={activeTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
+          {employeeNavLinks.map((link) => (
+            <TabsTrigger key={link.href} value={link.href} asChild>
+              <Link href={link.href} className='flex items-center gap-2'>
+                <link.icon className="h-4 w-4" />
+                {link.label}
+              </Link>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+      <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
         {children}
       </div>
     </div>
