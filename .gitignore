@@ -37,9 +37,30 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# genkit & environment
 .genkit/*
 .env*
 
 # firebase
 firebase-debug.log
 firestore-debug.log
+
+# ===============================================================
+# Python / Flask Backend
+# ===============================================================
+
+# Virtual Environments
+/venv
+/.venv
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Flask instance folder (for sensitive configuration)
+/instance/
+
+# IDE-specific folders
+.vscode/
+.idea/

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -46,26 +45,9 @@ const recentActivities = [
     { action: 'Admin logged in', user: 'admin@payflow.com', time: '3 hours ago' },
 ];
 
-
 export default function AdminDashboardPage() {
   return (
     <div className="flex flex-col min-h-screen">
-       <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
-        <div className="flex items-center gap-2 font-semibold">
-           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-primary">
-                <path d="M17 9.5H3" />
-                <path d="M21 4.5H3" />
-                <path d="M21 14.5H3" />
-                <path d="M17 19.5H3" />
-            </svg>
-            <span>PayFlow Admin</span>
-        </div>
-        <div className="ml-auto">
-             <Button variant="outline" asChild>
-                <Link href="/">Back to App</Link>
-            </Button>
-        </div>
-      </header>
       <main className="flex-1 p-4 sm:p-6 space-y-8">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>

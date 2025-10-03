@@ -1,35 +1,15 @@
 "use client";
 
 import { Search } from "lucide-react";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { usePathname } from 'next/navigation';
-import { navLinks } from '@/lib/links';
+import { useAuth } from "@/context/AuthContext";
 
 export default function Header() {
-  const avatarImage = PlaceHolderImages.find(p => p.id === 'user-avatar');
-  const pathname = usePathname();
-  
-  const getTitle = () => {
-    if (pathname === '/') return 'Dashboard';
-    const link = navLinks.find(link => pathname.startsWith(link.href) && link.href !== '/');
-    return link?.label || 'PayFlow';
-  }
+  const { user, logout } = useAuth();
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
@@ -47,18 +27,18 @@ export default function Header() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={avatarImage?.imageUrl} alt="User Avatar" data-ai-hint={avatarImage?.imageHint}/>
-                <AvatarFallback>U</AvatarFallback>
+                {/* We'll add a proper avatar image later */}
+                <AvatarFallback>{user?.email?.[0].toUpperCase() || 'U'}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuItem>Support</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Logout</DropdownMenuItem>
+            <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
     </header>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome to PayFlow Pro</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6;">
+    <h2>Welcome to PayFlow Pro, {{ user.employee.first_name }}!</h2>
+    <p>
+        An account has been created for you. You can log in using the credentials below.
+    </p>
+    <p>
+        <strong>Email:</strong> {{ user.email }}<br>
+        <strong>Temporary Password:</strong> <code>{{ password }}</code>
+    </p>
+    <p>
+        For your security, you will be required to change this password upon your first login.
+    </p>
+    <p>
+        <a href="http://localhost:9002/login" style="background-color: #3F51B5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            Login to Your Account
+        </a>
+    </p>
+    <br>
+    <p>
+        If you have any questions, please contact your administrator.
+    </p>
+    <p>
+        Thanks,<br>
+        The PayFlow Pro Team
+    </p>
+</body>
+</html>
