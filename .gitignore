@@ -50,8 +50,8 @@ firestore-debug.log
 # ===============================================================
 
 # Virtual Environments
-/venv
-/.venv
+**/venv/
+**/.venv
 
 # Python cache files
 __pycache__/
