@@ -29,13 +29,15 @@ def create_app(config_class=Config):
     @login_manager.unauthorized_handler
     def unauthorized():
         return jsonify({'message': 'Authentication required.'}), 401
-
+    
     from app.auth.routes import auth
     from app.core.routes import core
     from app.employee.routes import employee_bp
+    from app.admin.routes import admin_bp
 
     app.register_blueprint(auth)
     app.register_blueprint(core)
     app.register_blueprint(employee_bp)
+    app.register_blueprint(admin_bp)
 
     return app

@@ -14,7 +14,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string, asAdmin?: boolean) => Promise<any>; 
+  login: (email: string, password: string, asAdmin?: boolean) => Promise<any>;
   logout: () => void;
 }
 
@@ -23,7 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  const router = useRouter(); // We still need router for other potential navigation
 
   useEffect(() => {
     const checkSession = async () => {
@@ -40,32 +40,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string, asAdmin: boolean = false) => {
-    try {
-      const response = await apiClient.post('/auth/login', { email, password, as_admin: asAdmin });
-      if (response.data.user) {
+    const response = await apiClient.post('/auth/login', { email, password, as_admin: asAdmin });
+    if (response.data.user) {
         setUser(response.data.user);
-        // Don't set isLoading to false here - let it stay as is
-      }
-      return response.data;
-    } catch (error) {
-      throw error;
     }
+    return response.data;
   };
 
+  // --- THE FIX IS HERE ---
   const logout = async () => {
-    const wasAdmin = user?.roles.includes('Admin');
-    
     try {
       await apiClient.get('/auth/logout');
     } catch (error) {
       console.error("Logout failed", error);
     } finally {
+      // Simply clear the user state. The AuthGuard will handle the redirect.
       setUser(null);
-      if (wasAdmin) {
-        router.push('/admin/login');
-      } else {
-        router.push('/login');
-      }
     }
   };
   

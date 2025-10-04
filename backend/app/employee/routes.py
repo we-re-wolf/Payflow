@@ -5,19 +5,11 @@ from app.models import User, Role, Employee, Department, Designation
 from app import db
 from flask_login import login_required
 from functools import wraps
-
+from app.decorators import permission_required
+from app.models import User, Role, Employee, employee_id_seq
+from datetime import datetime
+from app.email import send_temporary_password_email
 employee_bp = Blueprint('employee', __name__, url_prefix='/api/employees')
-
-def permission_required(permission):
-    """Custom decorator to check user permissions."""
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if not current_user.is_authenticated or not current_user.has_permission(permission):
-                return jsonify({'message': 'Permission denied.'}), 403
-            return f(*args, **kwargs)
-        return decorated_function
-    return decorator
 
 
 def generate_temporary_password(length=10):
@@ -32,20 +24,22 @@ def generate_temporary_password(length=10):
 def create_employee():
     data = request.get_json()
     
-    # Basic validation
-    required_fields = ['email', 'firstName', 'lastName', 'employeeNumber', 'dateOfJoining', 'role_id']
+    required_fields = ['email', 'firstName', 'lastName', 'dateOfJoining', 'role_id']
     if not all(field in data for field in required_fields):
         return jsonify({'message': 'Missing required fields.'}), 400
 
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'message': 'User with this email already exists.'}), 409
     
-    if Employee.query.filter_by(employee_number=data['employeeNumber']).first():
-        return jsonify({'message': 'Employee with this number already exists.'}), 409
-
     role = Role.query.get(data['role_id'])
     if not role:
         return jsonify({'message': 'Invalid role specified.'}), 400
+
+    # --- Auto-generate Employee Number ---
+    next_id = db.session.execute(employee_id_seq)
+    emp_number = f"EMP-{datetime.utcnow().year}-{next_id:04d}"
+    print(f"Generated new employee number: {emp_number}")
+    # ---
 
     temp_password = generate_temporary_password()
 
@@ -54,22 +48,20 @@ def create_employee():
     new_user.roles.append(role)
     
     new_employee = Employee(
-        employee_number=data['employeeNumber'],
+        employee_number=emp_number, # Use the generated number
         first_name=data['firstName'],
         last_name=data['lastName'],
         date_of_joining=data['dateOfJoining'],
         user=new_user
     )
     
-    # Here you would trigger an email service to send the credentials
-    print(f"--- SIMULATING EMAIL ---")
-    print(f"To: {new_user.email}")
-    print(f"Subject: Your PayFlow Pro Account")
-    print(f"Your temporary password is: {temp_password}")
-    print(f"----------------------")
-
     db.session.add(new_user)
     db.session.add(new_employee)
     db.session.commit()
 
-    return jsonify({'message': 'Employee and user account created successfully.'}), 201
+    send_temporary_password_email(new_user, temp_password)
+
+    return jsonify({
+        'message': 'Employee and user account created successfully.',
+        'employeeNumber': emp_number
+    }), 201

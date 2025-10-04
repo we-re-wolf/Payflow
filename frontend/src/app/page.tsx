@@ -1,3 +1,4 @@
+'use client';
 import {
   Activity,
   ArrowUpRight,
@@ -7,7 +8,9 @@ import {
   CreditCard,
   Users,
 } from 'lucide-react';
-
+import { useEffect } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -57,6 +60,22 @@ const upcomingLeaves = [
 ]
 
 export default function Dashboard() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const { toast } = useToast();
+  useEffect(() => {
+    const error = searchParams.get('error');
+    if (error === 'permission_denied') {
+      toast({
+        variant: 'destructive',
+        title: "Access Denied",
+        description: "You do not have permission to view that page.",
+      });
+      // Remove the query param from the URL to prevent the toast from showing again on refresh
+      router.replace(pathname);
+    }
+  }, [searchParams, router, pathname, toast]);
   return (
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 md:gap-8">

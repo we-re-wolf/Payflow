@@ -6,10 +6,29 @@ import { Users, BarChart, Settings, FileText, Trash2, Eye, Edit, PlusCircle } fr
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ResponsiveContainer, BarChart as RechartsBarChart, XAxis, YAxis, Tooltip, Legend, Bar, LineChart as RechartsLineChart, Line, CartesianGrid, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { useState, useEffect } from 'react';
+import { UserForm } from "@/components/admin/user-form";
+import { useToast } from '@/hooks/use-toast';
+import apiClient from '@/lib/axios';
 
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  employee_number: string;
+  date_of_joining: string;
+  role: string;
+  role_id: number;
+  status: string;
+  avatar?: { // Avatar remains optional
+    imageUrl: string;
+    imageHint: string;
+  };
+}
 const users = [
   { id: 'USR-001', name: 'Olivia Martin', email: 'olivia.martin@example.com', role: 'Admin', status: 'Active', avatar: PlaceHolderImages.find(p => p.id === 'employee-1') },
   { id: 'USR-002', name: 'Jackson Lee', email: 'jackson.lee@example.com', role: 'User', status: 'Active', avatar: PlaceHolderImages.find(p => p.id === 'employee-2') },
@@ -45,8 +64,87 @@ const recentActivities = [
     { action: 'Admin logged in', user: 'admin@payflow.com', time: '3 hours ago' },
 ];
 
+
 export default function AdminDashboardPage() {
+  const [isUserFormOpen, setIsUserFormOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const { toast } = useToast();
+
+  // Function to fetch users from the backend
+  const fetchUsers = async () => {
+    try {
+      const response = await apiClient.get('/admin/users');
+      setUsers(response.data);
+    } catch (error) {
+      console.error("Failed to fetch users", error);
+      toast({ variant: 'destructive', title: "Failed to load users" });
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, [toast]);
+
+  const handleCreate = () => {
+    setSelectedUser(null);
+    setIsUserFormOpen(true);
+  };
+
+  const handleEdit = (user: User) => {
+    setSelectedUser(user);
+    setIsUserFormOpen(true);
+  };
+
+  const handleDelete = (user: User) => {
+    setUserToDelete(user);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    try {
+      await apiClient.delete(`/admin/users/${userToDelete.id}`);
+      toast({ title: "User Deleted", description: `${userToDelete.name} has been removed.` });
+      fetchUsers(); // Refresh the list
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: "Deletion Failed",
+        description: error.response?.data?.message || "An unexpected error occurred.",
+      });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
+    }
+  };
   return (
+    <>
+      {/* 3. Render the UserForm component */}
+      <UserForm
+        isOpen={isUserFormOpen}
+        onClose={() => setIsUserFormOpen(false)}
+        onUserSaved={fetchUsers}
+        userToEdit={selectedUser}
+      />
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the user <span className="font-semibold">{userToDelete?.name}</span> and all associated data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     <div className="flex flex-col min-h-screen">
       <main className="flex-1 p-4 sm:p-6 space-y-8">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -130,55 +228,52 @@ export default function AdminDashboardPage() {
         </div>
 
         <Card>
-            <CardHeader className="flex flex-row items-center">
-              <div className="grid gap-2">
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>View, edit, or delete users.</CardDescription>
-              </div>
-              <Button asChild size="sm" className="ml-auto gap-1">
-                <Link href="#">
-                  <PlusCircle className="h-4 w-4" />
-                  Create User
-                </Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {users.map(user => (
-                        <TableRow key={user.id}>
-                            <TableCell>
-                                <div className="flex items-center gap-3">
-                                    <Avatar className="h-9 w-9">
-                                        <AvatarImage src={user.avatar?.imageUrl} alt="Avatar" data-ai-hint={user.avatar?.imageHint} />
-                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <div className="font-medium">{user.name}</div>
-                                        <div className="text-sm text-muted-foreground">{user.email}</div>
-                                    </div>
-                                </div>
-                            </TableCell>
-                            <TableCell>{user.role}</TableCell>
-                            <TableCell><Badge variant={user.status === 'Active' ? 'secondary' : 'destructive'}>{user.status}</Badge></TableCell>
-                            <TableCell className="text-right">
-                                <Button variant="ghost" size="icon"><Eye className="h-4 w-4"/></Button>
-                                <Button variant="ghost" size="icon"><Edit className="h-4 w-4"/></Button>
-                                <Button variant="ghost" size="icon" className="text-destructive"><Trash2 className="h-4 w-4"/></Button>
-                            </TableCell>
-                        </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </CardContent>
+          <CardHeader className="flex flex-row items-center">
+            <div className="grid gap-2">
+              <CardTitle>User Management</CardTitle>
+              <CardDescription>View, create, edit, or delete users.</CardDescription>
+            </div>
+            <Button size="sm" className="ml-auto gap-1" onClick={handleCreate}>
+              <PlusCircle className="h-4 w-4" />
+              Create User
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map(user => (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                          {/* Using a placeholder since we don't store avatar URLs yet */}
+                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{user.name}</div>
+                          <div className="text-sm text-muted-foreground">{user.email}</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{user.role}</TableCell>
+                    <TableCell><Badge variant={user.status === 'Active' ? 'secondary' : 'destructive'}>{user.status}</Badge></TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}><Edit className="h-4 w-4"/></Button>
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDelete(user)}><Trash2 className="h-4 w-4"/></Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
         </Card>
 
         <div className="grid gap-8 md:grid-cols-2">
@@ -223,5 +318,6 @@ export default function AdminDashboardPage() {
         </div>
       </main>
     </div>
+  </>
   );
 }

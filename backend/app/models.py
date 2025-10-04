@@ -6,11 +6,11 @@ from datetime import datetime
 import enum
 from itsdangerous import URLSafeTimedSerializer as Serializer
 from flask import current_app
-
+from sqlalchemy import Sequence
 # ==============================================================================
 # User Authentication & RBAC (Role-Based Access Control)
 # ==============================================================================
-
+employee_id_seq = Sequence('employee_id_seq', start=1, increment=1)
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
